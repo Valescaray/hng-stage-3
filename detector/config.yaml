@@ -1,0 +1,39 @@
+# --- Required by task spec ---
+log_path: /var/log/nginx/hng-access.log
+slack_webhook_url: "${SLACK_WEBHOOK}"
+
+# Sliding window (task: last 60 seconds)
+window_seconds: 60
+
+# Baseline (task: 30-min window, recalc every 60s)
+baseline_window_minutes: 30
+baseline_recalc_interval_seconds: 60
+
+# Detection thresholds (task: z > 3.0 or rate > 5x mean)
+z_score_threshold: 3.0
+rate_multiplier_threshold: 5.0
+
+# Error surge (task: 3x baseline error rate tightens thresholds)
+error_surge_multiplier: 3.0
+
+# Unban schedule (task: 10min, 30min, 2hr, permanent)
+unban_schedule: [600, 1800, 7200, -1]
+
+# --- Implementation details not in spec but needed for correctness ---
+
+# Minimum per-second samples before baseline is trusted
+# Prevents false positives on startup
+min_data_points: 10
+
+# Safety floor — NOT the baseline. Applied only after the real baseline is
+# computed from actual traffic. Guards against division-by-zero / infinite
+# z-scores during true idle periods (no traffic at all).
+# Effective mean = max(computed_mean_from_traffic, this_floor)
+baseline_mean_floor: 0.1
+
+# Audit log path
+audit_log: /var/log/detector/audit.log
+
+# Dashboard
+dashboard_host: "0.0.0.0"
+dashboard_port: 8080
